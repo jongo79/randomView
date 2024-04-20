@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Image Viewer</title>
+    <style>
+        body,
+        html {
+            background-color: black;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        #button-container {
+            display: flex;
+            /* Use flexbox */
+            justify-content: center;
+            /* Horizontally center the items */
+            align-items: center;
+            /* Vertically center the items */
+            margin-bottom: 20px;
+            /* Add margin to separate from the clock */
+            margin-left: 0px;
+        }
+
+        #button-container button,
+        #button-container input[type="text"],
+        #button-container select {
+            margin: 0 1px;
+            background-color: aliceblue;
+        }
+
+        #current-time {
+            height: 23px;
+            color: white;
+            font-size: 18px;
+            font-family: monospace;
+            text-align: center;
+            margin-top: 15px;
+            margin:3px;
+        }
+
+
+        /* Set container width to 100% of viewport width */
+        #image-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+            background-color: black;
+        }
+
+        .image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            animation: kenburns 30s infinite;
+        }
+
+
+
+
+
+        /* Style the fullscreen button and time selector differently when in fullscreen mode */
+        .fullscreen {
+            opacity: 0.1;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div id="button-container">
+       
+            <!-- Select for time interval -->
+            
+            <select id="time-interval" onchange="updateInterval()">
+                <option value="1">1 Second</option>
+                <option value="2">2 Seconds</option>
+                <option value="3">3 Seconds</option>
+                <option value="4">4 Seconds</option>
+                <option value="5">5 Seconds</option>
+                <option value="10" selected>10 Seconds</option>
+                <option value="30">30 Seconds</option>
+                <option value="60">1 Minute</option>
+                <option value="300">5 Minutes</option>
+                <option value="600">10 Minutes</option>
+                <option value="1800">30 Minutes</option>
+                <option value="3600">1 Hour</option>
+                <option value="7200">2 Hours</option>
+                <option value="86400">1 Day</option>
+            </select>
+     
+        <!-- Container for buttons and time display -->
+        <div id="current-time"></div>
+            <!-- Button to toggle fullscreen mode -->
+            <button id="fullscreen-button" onclick="toggleFullscreen()">Fullscreen</button>
+    </div>
+    <!-- Container for the image -->
+    <div id="image-container"></div>
+
+    <!-- Image container -->
+    <!-- Images will be dynamically added here -->
+    </div>
+    <script>
+        let slideshowInterval; // Variable to store interval ID for slideshow
+        let slideshowRunning = false; // Variable to track slideshow state
+        // Function to set focus on the fullscreen button when the page loads
+function focusOnFullscreenButton() {
+    // Get the fullscreen button element
+    const fullscreenButton = document.getElementById('fullscreen-button');
+    
+    // Set focus on the fullscreen button
+    fullscreenButton.focus();
+}
+
+// Call the focusOnFullscreenButton function when the page loads
+window.onload = focusOnFullscreenButton;
+
+        // Function to display the current time
+        function displayCurrentTime() {
+            const now = new Date();
+            const hours = ('0' + now.getHours()).slice(-2); // Get hours with leading zero
+            const minutes = ('0' + now.getMinutes()).slice(-2); // Get minutes with leading zero
+            const seconds = ('0' + now.getSeconds()).slice(-2); // Get seconds with leading zero
+            const currentTime = hours + ':' + minutes + ':' + seconds; // Format time as HH:MM:SS
+            document.getElementById('current-time').textContent = currentTime; // Update time display
+        }
+
+        // Function to update the time interval for the slideshow
+        function updateInterval() {
+            // Restart the slideshow with the new interval
+            clearInterval(slideshowInterval); // Clear previous interval
+            startSlideshow(); // Start the slideshow with the new interval
+        }
+
+        // Function to start the slideshow
+        function startSlideshow() {
+            // Get the selected time interval value
+            const interval = parseInt(document.getElementById('time-interval').value);
+            // Start the slideshow with the selected interval
+            slideshowInterval = setInterval(fetchAndDisplayRandomImage, interval * 1000);
+        }
+
+        // Function to fetch a random image URL from the Picsum Photos API
+        async function fetchRandomImageUrl() {
+            try {
+                // Generate a random cache buster value to prevent caching
+                const cacheBuster = Math.random().toString(36).substring(7);
+                // Construct the image URL with the cache buster parameter
+                const imageUrl = `https://picsum.photos/1920/1080?${cacheBuster}`;
+                return imageUrl;
+            } catch (error) {
+                console.error('Error fetching image URL:', error);
+                throw error; // Rethrow the error to handle it externally
+            }
+        }
+// Function to generate the Ken Burns effect animation for 1-second interval (zoom in)
+function generateKenBurnsEffect1Sec() {
+    // Generate a unique animation name
+    const animationName = `kenburns-1sec-${Date.now()}`;
+    // Define the keyframes for the animation
+    const keyframes = `@keyframes ${animationName} {
+    0% {
+        transform: scale(1);
+    }
+   90%{
+    transform: scale (1.01)
+   }
+    100% {
+        transform: scale(1.02);
+    }
+}`;
+
+    // Create a style element to add the keyframes
+    const style = document.createElement('style');
+    style.appendChild(document.createTextNode(keyframes));
+    // Add the style element to the document head
+    document.head.appendChild(style);
+    // Return the animation name with a duration of 1 second
+    return `${animationName} 1s infinite alternate`;
+}
+
+// Function to fetch and display a random image
+async function fetchAndDisplayRandomImage() {
+    try {
+        // Fetch a random image URL
+        const imageUrl = await fetchRandomImageUrl();
+        // Create an image element
+        const img = document.createElement('img');
+        // Set the source of the image
+        img.src = imageUrl;
+
+        let animationDuration = '30s'; // Default animation duration
+
+        // Check if the time interval is set to 1 second
+        if (parseInt(document.getElementById('time-interval').value) === 1) {
+            // Apply zoom effect for 1-second interval
+            img.style.animation = generateKenBurnsEffect1Sec();
+            animationDuration = '1s'; // Set animation duration to 1 second
+        } else {
+            // Apply random Ken Burns effect for other intervals
+            img.style.animation = generateKenBurnsEffect();
+        }
+
+        // Set animation duration
+        img.style.animationDuration = animationDuration;
+
+        // Add the 'image' class to apply the Ken Burns effect
+        img.classList.add('image');
+        // Get the container for the image
+        const container = document.getElementById('image-container');
+        // Clear the container before adding a new image
+        container.innerHTML = '';
+        // Append the image to the container
+        container.appendChild(img);
+    } catch (error) {
+        console.error('Error fetching and displaying random image:', error);
+    }
+}
+
+
+
+        // Function to generate the Ken Burns effect animation
+        function generateKenBurnsEffect() {
+            // Random starting and ending scale values
+            const scaleStart = getRandomFloat(1.0, 1.2);
+            const scaleEnd = getRandomFloat(1.0, 1.2);
+            // Random starting and ending translate values (in percentage)
+            const translateXStart = getRandomFloat(-10, 10);
+            const translateYStart = getRandomFloat(-10, 10);
+            const translateXEnd = getRandomFloat(-10, 10);
+            const translateYEnd = getRandomFloat(-10, 10);
+            // Generate a unique animation name
+            const animationName = `kenburns-${Date.now()}`;
+            // Define the keyframes for the animation
+            const keyframes = `@keyframes ${animationName} {
+                0% {
+                    transform: scale(${scaleStart}) translate(${translateXStart}%, ${translateYStart}%);
+                }
+                100% {
+                    transform: scale(${scaleEnd}) translate(${translateXEnd}%, ${translateYEnd}%);
+                }
+            }`;
+            // Create a style element to add the keyframes
+            const style = document.createElement('style');
+            style.appendChild(document.createTextNode(keyframes));
+            // Add the style element to the document head
+            document.head.appendChild(style);
+            // Return the animation name with a duration of 30 seconds
+            return `${animationName} 30s infinite alternate`;
+        }
+
+        // Function to toggle fullscreen mode
+        function toggleFullscreen() {
+            const button = document.getElementById('fullscreen-button');
+            const timeSelector = document.getElementById('time-interval');
+            if (!document.fullscreenElement) {
+                // Enter fullscreen mode
+                document.documentElement.requestFullscreen().then(() => {
+                    // Update button style when entering fullscreen
+                    button.classList.add('fullscreen');
+                    // Update time selector style when entering fullscreen
+                    timeSelector.classList.add('fullscreen');
+                });
+            } else {
+                // Exit fullscreen mode
+                document.exitFullscreen().then(() => {
+                    // Update button style when exiting fullscreen
+                    button.classList.remove('fullscreen');
+                    // Update time selector style when exiting fullscreen
+                    timeSelector.classList.remove('fullscreen');
+                });
+            }
+        }
+
+        // Function to fetch the first image and start the slideshow
+        async function fetchFirstImageAndStartSlideshow() {
+            try {
+                // Fetch a random image URL for the first image
+                const firstImageUrl = await fetchRandomImageUrl();
+                // Create an image element for the first image
+                const firstImg = new Image();
+                // Set the source of the first image
+                firstImg.src = firstImageUrl;
+                // Apply the Ken Burns effect dynamically
+                firstImg.style.animation = generateKenBurnsEffect();
+                // Add the 'image' class
+                firstImg.classList.add('image');
+                // Get the container for the first image
+                const container = document.getElementById('image-container');
+                // Clear the container before adding the first image
+                container.innerHTML = '';
+                // Append the first image to the container
+                container.appendChild(firstImg);
+                // Start the slideshow after displaying the first image
+                startSlideshow();
+            } catch (error) {
+                console.error('Error fetching and displaying the first image:', error);
+            }
+        }
+
+        // Call the fetchFirstImageAndStartSlideshow function to fetch the first image and start the slideshow
+        fetchFirstImageAndStartSlideshow();
+
+        // Function to generate a random float within a range
+        function getRandomFloat(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+        // Call displayCurrentTime function every second to update the time display
+        setInterval(displayCurrentTime, 1000);
+    </script>
+</body>
+
+</html>
